@@ -1,0 +1,215 @@
+###########################
+# Intro to GPU and Docker #
+###########################
+
+# view ip settings
+ifconfig
+
+# device ip = en9: inet
+
+# connect to GPU
+# open vnc connect
+# sh resolution.sh to resize 
+
+docker login
+
+docker run hello-world
+
+docker images
+
+docker ps
+
+docker ps -a
+
+# run ubuntu docker container
+docker run --name ubuntu --rm -it ubuntu bash
+
+# browse directories
+ls
+
+# docker container running
+docker ps
+
+# detach from container
+ctrl+P ctrl+Q
+
+# reattach to container
+docker attach <container_id>
+
+# exit container
+exit
+
+# make sure container was deleted
+docker ps
+
+################
+# web app & db #
+################
+
+# terminal 1
+docker run --name web --hostname web --rm -it ubuntu bash
+
+# install ip-utils
+apt-get update && apt-get install iputils-ping -y
+
+# terminal 2
+docker run --name db --hostname db --rm -it ubuntu bash
+
+# detach
+ctrl+p ctrl+q
+
+# inspect db ip address
+docker inspect db | grep IPAddress
+
+# reattach
+docker attach web
+
+# create network
+docker network create network1
+
+# list networks
+docker network ls
+
+# terminal 1
+docker run --name web --hostname web --network network1 --rm -it ubuntu bash
+
+# install ip-utils
+apt-get update && apt-get install iputils-ping -y
+
+# terminal 2
+docker run --name db --hostname db --network network1 --rm -it ubuntu bash
+
+Persistent Files, Attaching Data Storage, Building and Sharing Images
+
+##########
+# YOLOV5 #
+##########
+
+# enaable X for web cam on GPU
+xhost +
+
+docker 
+
+# run yolov5 using docker container
+MODEL=yolov5s.pt
+CAM=0
+docker run --privileged --runtime nvidia --rm -v /data:/data -e DISPLAY -v /tmp:/tmp -ti yolov5 python3 detect.py --source $CAM --weights $MODEL --conf 0.4
+
+
+
+# create yolov5 docker container
+docker run -e DISPLAY=$DISPLAY --rm --hostname yolov5  --privileged -v /tmp:/tmp -ti yolov5
+
+
+######################
+# IoT Face Detection #
+######################
+# AWS configuration
+aws configure
+
+# Once downloaded, adjust the permissions of the pem file on your workstation
+# Run this command to remove permissions from other users:
+chmod 400 berkeley-key.pem
+
+# Add the downloaded key pair to SSH identities on your workstation.
+ssh-add -K berkeley-key.pem 
+ssh-add -L
+
+# connect to cloud instance
+ssh -A ubuntu@<Public IPv4 DNS>
+
+# run broker using user-defined network and expose port to outside 
+ 
+
+# run image processor using user-defined network and volume mount
+docker run -it --rm --name processor --hostname processor --network mqtt -v /mnt/iot-present:/mnt/iot-present samueljgomez/processor-ec2:ubuntu
+
+
+'''
+Create S3 bucket (sgomez-w251-hw03). Add IAM role to EC2 instance (s3MountBucket) using policy AmazonS3FullAccess.  
+I also added the AmazonS3FullAccess to my user permissions
+'''
+
+# now back to the instance
+
+# download s3fs-fuse to VI
+sudo apt install s3fs
+
+# follow these steps
+echo ACCESS_KEY_ID:SECRET_ACCESS_KEY > ${HOME}/.passwd-s3fs
+chmod 600 ${HOME}/.passwd-s3fs
+
+# verify buckets
+aws s3 ls
+
+# this is where the magic happens--took hours to figure out
+sudo s3fs sgomez-w251-hw03 /mnt/sgomez-w251-hw03/ -o iam_role="s3MountBucket" -o url="https://s3.us-west-1.amazonaws.com" -o endpoint=us-west-1 -o dbglevel=info -o curldbg -o allow_other -o use_cache=/tmp -o nonemptydoc
+
+# run broker using user-defined network and expose port to outside 
+docker run -it --rm --name broker --hostname broker --network mqtt -p 32746:1883 samueljgomez/mosquitto-ec2:alpine 
+
+# run image processor using user-defined network and volume mount
+docker run -it --rm --name processor --hostname processor --network mqtt -v /mnt/sgomez-w251-hw03:/mnt/sgomez-w251-hw03 samueljgomez/processor-ec2:ubuntu
+
+
+
+# start kubernetes
+sudo systemctl start k3s
+
+# stop kubernetes
+sudo systemctl stop k3s
+
+# stop kubernetes
+sudo systemctl disable k3s
+
+kubectl apply -f broker/mosquitto-service.yaml
+kubectl get service
+
+kubectl apply -f broker/mosquitto-deployment.yaml
+kubectl get pods
+
+kubectl apply -f face-detector/face-detector.yaml
+
+kubectl exec -it <face-detector-b879d47d6-4w6jx> -- bash 
+
+kubectl apply -f logger/logger.yaml 
+
+kubectl logs -f <pod>
+
+# change ip address to cloud
+
+# start forwarder deployment
+kubectl apply -f forwarder/forwarder.yaml
+
+
+sudo netstat -nltp | grep 1883
+sudo kill -9 <PID>
+
+docker kill $(docker ps -q)
+
+docker rm $(docker ps -a -q)
+
+kubectl delete deployment mosquitto-deployment.yaml /
+kubectl delete deployment face-detector /
+kubectl delete deployment logger /
+kubectl delete deployment forwarder
+kubectl 
+# troubleshooting commands
+kubectl logs -f <PodName>
+kubectl exec -it <PodName> -- bash
+kubectl delete deployment <deployment name>
+kubectl delete service <service name>
+
+
+
+
+
+
+
+
+docker build -t samueljgomez/processor-ec2:ubuntu -f Dockerfile .
+
+
+
+
+
